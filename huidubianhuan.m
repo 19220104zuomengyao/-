@@ -4,7 +4,7 @@ clear;clc;close all;
 % 打开图像文件
 img = imread('E:\图片\qimo.jpg');
 
-% 灰度化（如果是彩色图）
+% 灰度化
 if size(img,3) == 3
     grayImg = rgb2gray(img);
 else
@@ -12,17 +12,17 @@ else
 end
 
 % 线性变换增强对比度
-a = 2; % 线性变换系数，可调整
-b = 50; % 线性变换偏移量，可调整
-linearEnhancedImg = imadjust(grayImg,[],[], [a b]);
+a = 2; % 线性变换系数
+b = 50; % 线性变换偏移量
+linearEnhancedImg = imadjust(grayImg,[], [], a);
 
 % 对数变换增强对比度
-c = 1; % 对数变换系数，可调整
+c = 1; % 对数变换系数
 logEnhancedImg = c * log(1 + double(grayImg));
 logEnhancedImg = uint8(mat2gray(logEnhancedImg) * 255);
 
 % 指数变换增强对比度
-d = 1.05; % 指数变换底数，可调整
+d = 1.05; % 指数变换底数
 expEnhancedImg = d.^ double(grayImg);
 expEnhancedImg = uint8(mat2gray(expEnhancedImg) * 255);
 
