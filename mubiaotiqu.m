@@ -17,7 +17,7 @@ color_image = imread(full_path);
 % 将彩色图片转换为灰度图像
 gray_image = rgb2gray(color_image);
 
-% 进行二值化处理（这里采用自适应阈值的二值化方法，你也可以选择其他合适的阈值设定方式）
+% 进行二值化处理，采用自适应阈值的二值化方法
 binary_image = imbinarize(gray_image, 'adaptive');
 
 % 定义击中部分的结构元素
@@ -44,7 +44,7 @@ eroded_miss = ~eroded_miss;
 % 执行逻辑与操作，得到击中与否变换的结果
 result = eroded_hit & eroded_miss;
 
-% 显示原始彩色图像、二值化图像、击中部分腐蚀结果、未击中部分腐蚀结果以及最终提取结果
+% 显示原始彩色图像及最终提取结果
 subplot(2, 3, 1);
 imshow(color_image);
 title('原始图像');
@@ -53,54 +53,84 @@ subplot(2, 3, 2);
 imshow(result);
 title('目标提取结果');
 
-% 提取原始图像的LBP特征（这里使用Matlab自带的lbp函数，若版本不同可能函数有差异）
-original_lbp = extractLBPFeatures(gray_image);
+% 提取原始图像的LBP特征
+image = gray_image;
+[N,M] = size(image);
+lbp = zeros(N,M);
+for j = 2:(N - 1)
+    for i = 2:(M - 1)
+        neighbor = [image(j - 1, i - 1), image(j - 1, i), image(j - 1, i + 1);
+                    image(j, i - 1), image(j, i), image(j, i + 1);
+                    image(j + 1, i - 1), image(j + 1, i), image(j + 1, i + 1)];
+        count = 0;
+        for k = 0:7
+            binVal1 = neighbor(mod(k + 1,3)+1,ceil((k + 1)/3));
+            binVal2 = image(j, i);
+            if binVal1> binVal2
+                count = count + 2 ^ (7 - k);
+            end
+        end
+        lbp(j, i) = count;
+    end
+end
+lbp = uint8(lbp);
 disp('原始图像的LBP特征：');
-disp(original_lbp);
+disp(lbp);
 
-% 绘制原始图像的LBP特征图像（将LBP特征矩阵可视化，这里简单将其以图像形式展示，每个像素对应一个LBP值）
-original_lbp_image = mat2gray(original_lbp); % 将特征矩阵归一化到[0,1]便于显示
+% 绘制原始图像的LBP特征图像
+original_lbp_image = mat2gray(lbp);
 subplot(2, 3, 3);
 imshow(original_lbp_image);
-title('Original Image LBP Feature Image');
+title('原始图像的LBP特征图像');
 
-% 提取原始图像的HOG特征（这里使用Matlab自带的extractHOGFeatures函数）
-[original_hog_feat, visualization] = extractHOGFeatures(gray_image);
+% 提取原始图像的HOG特征
+% handles = []; % 这里handles没有定义，需要根据实际情况补充
+grayImg = gray_image; 
+[original_hog_feat, visualization] = extractHOGFeatures(grayImg, 'CellSize', [8 8], 'BlockSize', [2 2]);
 disp('原始图像的HOG特征：');
 disp(original_hog_feat);
 
-% 绘制原始图像的HOG特征图像（利用HOG特征可视化信息展示，通过合适方式获取图像数据）
-if isstruct(visualization) && isfield(visualization, 'Visualization')
-    hog_image_data = visualization.Visualization; % 对于较新Matlab版本，获取可视化数据部分
-    subplot(2, 3, 4);
-    imshow(hog_image_data);
-    title('Original Image HOG Feature Image');
-else
-    warning('无法正确解析HOG特征可视化数据，可能版本不兼容');
+subplot(2, 3, 4);
+plot(visualization); 
+title('原始图像的HOG特征图像');
+
+
+% 提取提取目标图像的LBP特征
+image = result;
+[N,M] = size(image);
+lbp = zeros(N,M);
+for j = 2:(N - 1)
+    for i = 2:(M - 1)
+        neighbor = [image(j - 1, i - 1), image(j - 1, i), image(j - 1, i + 1);
+                    image(j, i - 1), image(j, i), image(j, i + 1);
+                    image(j + 1, i - 1), image(j + 1, i), image(j + 1, i + 1)];
+        count = 0;
+        for k = 0:7
+            binVal1 = neighbor(mod(k + 1,3)+1,ceil((k + 1)/3));
+            binVal2 = image(j, i);
+            if binVal1> binVal2
+                count = count + 2 ^ (7 - k);
+            end
+        end
+        lbp(j, i) = count;
+    end
 end
-
-% 提取提取目标图像（result）的LBP特征（需确保result为二值图像，若不是可能要进一步处理）
-target_lbp = extractLBPFeatures(result);
+lbp = uint8(lbp);
 disp('提取目标图像的LBP特征：');
-disp(target_lbp);
+disp(lbp);
 
-% 绘制提取目标图像的LBP特征图像（同样进行归一化并展示）
-target_lbp_image = mat2gray(target_lbp);
+% 绘制提取目标图像的LBP特征图像
+target_lbp_image = mat2gray(lbp);
 subplot(2, 3, 5);
 imshow(target_lbp_image);
-title('Target Image LBP Feature Image');
+title('目标图像的LBP特征图像');
 
-% 提取提取目标图像（result）的HOG特征
-[target_hog_feat, visualization_target] = extractHOGFeatures(result);
+% 提取提取目标图像的HOG特征
+grayImg = result;
+[target_hog_feat, visualization_target] = extractHOGFeatures(grayImg, 'CellSize', [8 8], 'BlockSize', [2 2]);
 disp('提取目标图像的HOG特征：');
 disp(target_hog_feat);
 
-% 绘制提取目标图像的HOG特征图像（利用其可视化信息展示，通过合适方式获取图像数据）
-if isstruct(visualization_target) && isfield(visualization_target, 'Visualization')
-    hog_image_data_target = visualization_target.Visualization; % 对于较新Matlab版本，获取可视化数据部分
-    subplot(2, 3, 6);
-    imshow(hog_image_data_target);
-    title('Target Image HOG Feature Image');
-else
-    warning('无法正确解析HOG特征可视化数据，可能版本不兼容');
-end
+subplot(2, 3, 6);
+plot(visualization_target); 
+title('目标图像的HOG特征图像');
