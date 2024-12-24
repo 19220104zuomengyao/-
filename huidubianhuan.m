@@ -2,7 +2,11 @@
 clear;clc;close all;
 
 % 打开图像文件
-img = imread('E:\图片\qimo.jpg');
+[filename, pathname] = uigetfile({'*.jpg;*.png;*.bmp'},'选择图像文件');
+if isequal(filename,0) || isequal(pathname,0)
+    return;
+end
+img = imread(fullfile(pathname,filename));
 
 % 灰度化
 if size(img,3) == 3

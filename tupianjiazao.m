@@ -2,7 +2,11 @@
 clear;clc;close all;
 
 % 图像读取
-img = imread('E:\图片\qimo.jpg');
+[filename, pathname] = uigetfile({'*.jpg;*.png;*.bmp'},'选择图像文件');
+if isequal(filename,0) || isequal(pathname,0)
+    return;
+end
+img = imread(fullfile(pathname,filename));
 grayImg = rgb2gray(img); % 转换为灰度图像
 
 % 输入参数，控制噪声类型（1表示高斯噪声，2表示椒盐噪声）
